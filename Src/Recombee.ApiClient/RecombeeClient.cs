@@ -20,6 +20,7 @@ namespace Recombee.ApiClient
 
         readonly bool useHttpsAsDefault;
         readonly bool isClient;
+        private readonly HttpMessageHandler handler;
 
         readonly string hostUri = "rapi.recombee.com";
         readonly string clientHostUri = "client-rapi.recombee.com";
@@ -34,12 +35,14 @@ namespace Recombee.ApiClient
         /// <param name="secretToken">Corresponding secret token.</param>
         /// <param name="useHttpsAsDefault">If true, all requests are sent using HTTPS</param>
         /// <param name="isClient">If true, access the API using client->server communication with the public token as the secretToken instead of using server->server communication with the private token</param>
-        public RecombeeClient(string databaseId, string secretToken, bool useHttpsAsDefault = true, bool isClient = false)
+        /// <param name="handler">Optional message handler for the http client</param>
+        public RecombeeClient(string databaseId, string secretToken, bool useHttpsAsDefault = true, bool isClient = false, HttpMessageHandler handler = null)
         {
             this.databaseId = databaseId;
             this.secretTokenBytes = Encoding.ASCII.GetBytes(secretToken);
             this.useHttpsAsDefault = useHttpsAsDefault;
             this.isClient = isClient;
+            this.handler = handler;
             this.httpClient = createHttpClient();
 
             var envHostUri = Environment.GetEnvironmentVariable("RAPI_URI");
@@ -52,7 +55,7 @@ namespace Recombee.ApiClient
 
         private HttpClient createHttpClient()
         {
-            var httpClient = new HttpClient();
+            var httpClient = handler == null ? new HttpClient() : new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Add("User-Agent", "recombee-.net-api-client/2.4.1");
             return httpClient;
         }
